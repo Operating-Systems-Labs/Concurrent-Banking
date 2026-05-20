@@ -170,10 +170,10 @@ int main(int argc, char* argv[]) {
     }
 
 
-    print_loaded_accounts(bank);
-    
-
-    print_loaded_transactions(txs, MAX_TRANSACTIONS);
+    if (verbose_logging) {
+        print_loaded_accounts(bank);
+        print_loaded_transactions(txs, MAX_TRANSACTIONS);
+    }
 
     
     //initialize timer thread and logical clock
