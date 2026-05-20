@@ -32,11 +32,11 @@ debug-all: debug
 	setarch $(uname -m) -R ./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_rw_mix.txt --deadlock=prevention --tick-ms=100
 
 test: all
-	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_simple.txt --tick-ms=100
-	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_readers.txt --tick-ms=100
-	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_abort.txt --tick-ms=100
-	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_deadlock.txt --tick-ms=100
-	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_buffer.txt --tick-ms=100
+	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_simple.txt --deadlock=prevention --tick-ms=100
+	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_readers.txt --deadlock=prevention --tick-ms=100
+	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_abort.txt --deadlock=prevention --tick-ms=100
+	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_deadlock.txt --deadlock=prevention --tick-ms=100
+	./bin/bankdb --accounts=tests/accounts.txt --trace=tests/trace_buffer.txt --deadlock=prevention --tick-ms=100
 
 clean:
 	rm -rf bin/bankdb
