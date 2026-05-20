@@ -4,6 +4,7 @@
 #include "timer.h"
 #include "metrics.h"
 #include "buffer_pool.h"
+#include "lock_mgr.h"
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -60,10 +61,9 @@ static int get_balance(int account_id) {
         return 0;
     }
 
-    // Add Read Lock for the balance inquiry
-    pthread_rwlock_rdlock(&acc->lock);
+    lock_account(acc, LOCK_READ);
     int balance = acc->balance_centavos;
-    pthread_rwlock_unlock(&acc->lock);
+    unlock_account(acc);
     unload_account(&buffer_pool, account_id);
 
     return balance;
@@ -81,10 +81,9 @@ static void deposit(int account_id, int amount_centavos) {
         return;
     }
 
-    // Add Write Lock for modification
-    pthread_rwlock_wrlock(&acc->lock);
+    lock_account(acc, LOCK_WRITE);
     acc->balance_centavos += amount_centavos;
-    pthread_rwlock_unlock(&acc->lock);
+    unlock_account(acc);
 
     unload_account(&buffer_pool, account_id);
 
@@ -102,11 +101,10 @@ static bool withdraw(int account_id, int amount_centavos) {
         return false;
     }
 
-    // Add Write Lock for modification
-    pthread_rwlock_wrlock(&acc->lock);
+    lock_account(acc, LOCK_WRITE);
     if (acc->balance_centavos >= amount_centavos) {
         acc->balance_centavos -= amount_centavos;
-        pthread_rwlock_unlock(&acc->lock);
+        unlock_account(acc);
 
         unload_account(&buffer_pool, account_id);
 
@@ -114,7 +112,7 @@ static bool withdraw(int account_id, int amount_centavos) {
         return true;
     } 
     
-    pthread_rwlock_unlock(&acc->lock);
+    unlock_account(acc);
     unload_account(&buffer_pool, account_id);
     if (verbose_logging) {
         printf("Tick %d: WITHDRAW failed (insufficient funds) account %d\n", current_tick(), account_id);
@@ -128,9 +126,7 @@ static bool transfer(int from_id, int to_id, int amount_centavos) {
     int to_index = -1;
     int i;
     bool success = false;
-    Account *acc_first, *acc_second;
-    int first_id;
-    int second_id;
+    Account *acc_from, *acc_to;
 
     if (from_id == to_id || amount_centavos <= 0) return false;
 
@@ -146,28 +142,13 @@ static bool transfer(int from_id, int to_id, int amount_centavos) {
 
     if (from_index < 0 || to_index < 0) return false;
 
-    // Deadlock Prevention: Always lock the lower ID first
-    if (from_id < to_id) {
-        acc_first = &bank->accounts[from_index];
-        acc_second = &bank->accounts[to_index];
-        first_id = from_id;
-        second_id = to_id;
-    } else {
-        acc_first = &bank->accounts[to_index];
-        acc_second = &bank->accounts[from_index];
-        first_id = to_id;
-        second_id = from_id;
-    }
+    acc_from = &bank->accounts[from_index];
+    acc_to = &bank->accounts[to_index];
 
-    if (verbose_logging) {
-        printf("Tick %d: Lock ordering first=%d second=%d\n", current_tick(), first_id, second_id);
-    }
+    load_account(&buffer_pool, from_id);
+    load_account(&buffer_pool, to_id);
 
-    load_account(&buffer_pool, first_id);
-    load_account(&buffer_pool, second_id);
-
-    pthread_rwlock_wrlock(&acc_first->lock);
-    pthread_rwlock_wrlock(&acc_second->lock);
+    lock_accounts_ordered(acc_from, from_id, acc_to, to_id);
 
     if (bank->accounts[from_index].balance_centavos >= amount_centavos) {
         bank->accounts[from_index].balance_centavos -= amount_centavos;
@@ -175,11 +156,10 @@ static bool transfer(int from_id, int to_id, int amount_centavos) {
         success = true;
     }
 
-    pthread_rwlock_unlock(&acc_second->lock);
-    pthread_rwlock_unlock(&acc_first->lock);
+    unlock_accounts_ordered(acc_from, from_id, acc_to, to_id);
 
-    unload_account(&buffer_pool, second_id);
-    unload_account(&buffer_pool, first_id);
+    unload_account(&buffer_pool, to_id);
+    unload_account(&buffer_pool, from_id);
 
     if (success) {
         record_withdraw(amount_centavos);
