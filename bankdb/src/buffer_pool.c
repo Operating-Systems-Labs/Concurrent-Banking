@@ -1,6 +1,7 @@
 /* Bounded buffer implementation using synchronization primitives. */
 #include "buffer_pool.h"
 #include <stdio.h>
+#include <time.h>
 
 void init_buffer_pool(BufferPool* pool) {
     // Make all spots on the table as empty
@@ -25,7 +26,9 @@ void init_buffer_pool(BufferPool* pool) {
 // When a transaction worker needs an account, take a ticket from the empty_slots bowl
 void load_account(BufferPool* pool, int account_id) {
     if (sem_trywait(&pool->empty_slots) != 0) {
+        pthread_mutex_lock(&pool->pool_lock);
         pool->blocked_loads++;
+        pthread_mutex_unlock(&pool->pool_lock);
         sem_wait(&pool->empty_slots); // Block if pool is full
     }
 
@@ -48,6 +51,14 @@ void load_account(BufferPool* pool, int account_id) {
     pthread_mutex_unlock(&pool->pool_lock);
     // Put ticket into the full_slots bowl to let everyone know there is a new acc to work on 
     sem_post(&pool->full_slots);
+
+    if (BUFFER_POOL_HOLD_US > 0) {
+        struct timespec hold = {
+            .tv_sec = 0,
+            .tv_nsec = BUFFER_POOL_HOLD_US * 1000L
+        };
+        nanosleep(&hold, NULL);
+    }
 }
 
 

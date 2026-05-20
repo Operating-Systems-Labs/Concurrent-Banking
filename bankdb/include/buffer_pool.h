@@ -3,6 +3,7 @@
 #define BUFFER_POOL_H
 
 #define BUFFER_POOL_SIZE 5
+#define BUFFER_POOL_HOLD_US 5000
 
 #include <semaphore.h>
 #include "bank.h"
