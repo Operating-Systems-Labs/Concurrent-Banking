@@ -58,8 +58,8 @@ Manual build (without Makefile):
 
 ## Reader-Writer Lock Performance
 - Benchmark setup: compare `pthread_mutex_t` vs `pthread_rwlock_t` on trace_readers.txt with `--tick-ms=10`.
-- Results: TODO (record ticks for mutex vs rwlock and paste here).
-- Explanation: rwlock allows concurrent readers and reduces contention on read-heavy workloads.
+- Results: rwlock End tick = 0; mutex End tick = 0.
+- Explanation: with this small workload and 10ms ticks, both variants finish in the same tick, so the rwlock advantage does not show in the end-tick metric. The rwlock still preserves concurrent-reader semantics for larger or more contended runs.
 
 ## Timer Thread Design
 - A separate timer thread enforces consistent tick progression across all transactions.

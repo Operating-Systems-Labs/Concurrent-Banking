@@ -1,5 +1,11 @@
 # Concurrent Banking (CMSC 125 Lab 3)
 
+## Members
+
+- Andrea Laserna
+- Cedric Oyco
+
+
 ## Flowchart
 
 ![flowchart](flowchart.JPG)
