@@ -3,7 +3,7 @@ INCLUDES = -Iinclude
 SOURCES = $(wildcard src/*.c)
 TARGET = bin/bankdb
 
-CFLAGS_COMMON = -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L
+CFLAGS_COMMON = -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500
 CFLAGS_RELEASE = $(CFLAGS_COMMON) -O2
 CFLAGS_DEBUG = $(CFLAGS_COMMON) -g -O1 -fsanitize=thread
 

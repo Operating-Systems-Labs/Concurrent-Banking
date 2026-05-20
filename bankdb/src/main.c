@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "metrics.h"
 #include "buffer_pool.h"
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>

@@ -5,11 +5,11 @@
 #include "metrics.h"
 #include "buffer_pool.h"
 #include "lock_mgr.h"
+#include "config.h"
 #include <stdio.h>
 #include <stdbool.h>
 
 extern BufferPool buffer_pool;
-extern bool verbose_logging;
 
 static int current_tick(void) {
     int tick;

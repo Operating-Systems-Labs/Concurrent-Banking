@@ -1,13 +1,11 @@
 /* Timer thread implementation, clock ticks, and timeout/event signaling. */
 #define _DEFAULT_SOURCE  /* Required for usleep with -std=c11 */
 #include "timer.h"
-#include "timer.h"
+#include "config.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
-
-extern bool verbose_logging;
 
 // Global simulation clock (shared by all threads)
 volatile int global_tick;
