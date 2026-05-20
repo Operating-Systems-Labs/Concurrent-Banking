@@ -50,7 +50,7 @@ static Account* find_account(int account_id) {
 // Sol: Wrap every account access in a read/write lock
 
 // rdlock before reading balance and unlock after - multiple workers can check the account balance at the same time without changing anything
-static int get_balance(int account_id) {
+static bool get_balance(int account_id, int* out_balance) {
     if (verbose_logging) {
         printf("Tick %d: BALANCE account %d\n", current_tick(), account_id);
     }
@@ -58,7 +58,7 @@ static int get_balance(int account_id) {
     Account* acc = find_account(account_id);
     if (!acc) {
         unload_account(&buffer_pool, account_id);
-        return 0;
+        return false;
     }
 
     lock_account(acc, LOCK_READ);
@@ -66,11 +66,15 @@ static int get_balance(int account_id) {
     unlock_account(acc);
     unload_account(&buffer_pool, account_id);
 
-    return balance;
+    if (out_balance) {
+        *out_balance = balance;
+    }
+
+    return true;
 }
 
 // rwlock so no one else can look at the account until done with the update (deposit and withdraw)
-static void deposit(int account_id, int amount_centavos) {
+static bool deposit(int account_id, int amount_centavos) {
     if (verbose_logging) {
         printf("Tick %d: DEPOSIT account %d amount %d\n", current_tick(), account_id, amount_centavos);
     }
@@ -78,7 +82,7 @@ static void deposit(int account_id, int amount_centavos) {
     Account* acc = find_account(account_id);
     if (!acc) {
         unload_account(&buffer_pool, account_id);
-        return;
+        return false;
     }
 
     lock_account(acc, LOCK_WRITE);
@@ -88,6 +92,7 @@ static void deposit(int account_id, int amount_centavos) {
     unload_account(&buffer_pool, account_id);
 
     record_deposit(amount_centavos);
+    return true;
 }
 
 static bool withdraw(int account_id, int amount_centavos) {
@@ -197,7 +202,10 @@ void* execute_transaction(void* arg) {
 
         switch (op->type) {
             case OP_DEPOSIT:
-                deposit(op->account_id, op->amount_centavos);
+                if (!deposit(op->account_id, op->amount_centavos)) {
+                    tx->status = TX_ABORTED;
+                    break;
+                }
                 break;
                 
             case OP_WITHDRAW:
@@ -217,10 +225,16 @@ void* execute_transaction(void* arg) {
                 break;
                 
             case OP_BALANCE:
-                int balance = get_balance(op->account_id);
-                printf("T%d: Account %d balance = PHP %d.%02d\n", 
-                       tx->tx_id, op->account_id, 
-                       balance / 100, balance % 100);
+                {
+                    int balance = 0;
+                    if (!get_balance(op->account_id, &balance)) {
+                        tx->status = TX_ABORTED;
+                        break;
+                    }
+                    printf("T%d: Account %d balance = PHP %d.%02d\n", 
+                           tx->tx_id, op->account_id, 
+                           balance / 100, balance % 100);
+                }
                 break;
         }
 
