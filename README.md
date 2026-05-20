@@ -69,7 +69,11 @@ Optional flags:
 ## Screenshots and Logs
 
 Add required proofs to the screenshot/ folder and link them here:
-- ThreadSanitizer zero warnings: ![screenshot/tsan_readers.png](screenshot/tsan_readers.png)
-- Deadlock prevention verbose run: ![screenshot/deadlock_prevention_verbose.png](screenshot/deadlock_prevention_verbose.png)
-- Buffer pool blocking (trace_buffer): ![screenshot/buffer_pool_blocking.png](screenshot/buffer_pool_blocking.png)
-- Conservation check: ![screenshot/conservation_check.png](screenshot/conservation_check.png)
+- ThreadSanitizer zero warnings: 
+	![screenshot/tsan_readers.png](screenshot/tsan_readers.png)
+- Deadlock prevention verbose run: 
+	![screenshot/deadlock_prevention_verbose.png](screenshot/deadlock_prevention_verbose.png)
+- Buffer pool blocking (trace_buffer): 
+	![screenshot/buffer_pool_blocking.png](screenshot/buffer_pool_blocking.png)
+- Conservation check: 
+	![screenshot/conservation_check.png](screenshot/conservation_check.png)
