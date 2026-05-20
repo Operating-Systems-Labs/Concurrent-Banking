@@ -74,7 +74,7 @@ static bool get_balance(int account_id, int* out_balance) {
 }
 
 // rwlock so no one else can look at the account until done with the update (deposit and withdraw)
-static bool deposit(int account_id, int amount_centavos) {
+static bool deposit(Transaction* tx, int account_id, int amount_centavos) {
     if (verbose_logging) {
         printf("Tick %d: DEPOSIT account %d amount %d\n", current_tick(), account_id, amount_centavos);
     }
@@ -85,7 +85,12 @@ static bool deposit(int account_id, int amount_centavos) {
         return false;
     }
 
+    int wait_start = current_tick();
     lock_account(acc, LOCK_WRITE);
+    int wait_end = current_tick();
+    if (tx && wait_end > wait_start) {
+        tx->wait_ticks += (wait_end - wait_start);
+    }
     acc->balance_centavos += amount_centavos;
     unlock_account(acc);
 
@@ -95,7 +100,7 @@ static bool deposit(int account_id, int amount_centavos) {
     return true;
 }
 
-static bool withdraw(int account_id, int amount_centavos) {
+static bool withdraw(Transaction* tx, int account_id, int amount_centavos) {
     if (verbose_logging) {
         printf("Tick %d: WITHDRAW account %d amount %d\n", current_tick(), account_id, amount_centavos);
     }
@@ -106,7 +111,12 @@ static bool withdraw(int account_id, int amount_centavos) {
         return false;
     }
 
+    int wait_start = current_tick();
     lock_account(acc, LOCK_WRITE);
+    int wait_end = current_tick();
+    if (tx && wait_end > wait_start) {
+        tx->wait_ticks += (wait_end - wait_start);
+    }
     if (acc->balance_centavos >= amount_centavos) {
         acc->balance_centavos -= amount_centavos;
         unlock_account(acc);
@@ -126,7 +136,7 @@ static bool withdraw(int account_id, int amount_centavos) {
 }
 
 // use rwlock wrlock for both source and destination accounts before changing balances
-static bool transfer(int from_id, int to_id, int amount_centavos) {
+static bool transfer(Transaction* tx, int from_id, int to_id, int amount_centavos) {
     int from_index = -1;
     int to_index = -1;
     int i;
@@ -153,7 +163,12 @@ static bool transfer(int from_id, int to_id, int amount_centavos) {
     load_account(&buffer_pool, from_id);
     load_account(&buffer_pool, to_id);
 
+    int wait_start = current_tick();
     lock_accounts_ordered(acc_from, from_id, acc_to, to_id);
+    int wait_end = current_tick();
+    if (tx && wait_end > wait_start) {
+        tx->wait_ticks += (wait_end - wait_start);
+    }
 
     if (bank->accounts[from_index].balance_centavos >= amount_centavos) {
         bank->accounts[from_index].balance_centavos -= amount_centavos;
@@ -202,14 +217,14 @@ void* execute_transaction(void* arg) {
 
         switch (op->type) {
             case OP_DEPOSIT:
-                if (!deposit(op->account_id, op->amount_centavos)) {
+                if (!deposit(tx, op->account_id, op->amount_centavos)) {
                     tx->status = TX_ABORTED;
                     break;
                 }
                 break;
                 
             case OP_WITHDRAW:
-                if (!withdraw(op->account_id, op->amount_centavos)) {
+                if (!withdraw(tx, op->account_id, op->amount_centavos)) {
                     // Insufficient funds - abort transaction
                     tx->status = TX_ABORTED;
                     break;
@@ -217,7 +232,7 @@ void* execute_transaction(void* arg) {
                 break;
                 
             case OP_TRANSFER:
-                if (!transfer(op->account_id, op->target_account,
+                if (!transfer(tx, op->account_id, op->target_account,
                               op->amount_centavos)) {
                     tx->status = TX_ABORTED;
                     break;

@@ -67,7 +67,7 @@ void print_final_report(Bank* bank, Transaction* txs[], int txs_count, long init
         } else if (txs[i]->status == TX_ABORTED) {
             status = "ABORTED";
         }
-        int wait = txs[i]->actual_start - txs[i]->start_tick;
+        int wait = txs[i]->wait_ticks;
         printf("T%-4d | %-10d | %-12d | %-8d | %-10d | %-10s\n",
             txs[i]->tx_id, txs[i]->start_tick, txs[i]->actual_start, 
             txs[i]->actual_end, wait, status);
