@@ -24,14 +24,6 @@ Bank* create_bank();
 
 void destroy_bank(Bank* bank);
 
-Account* create_account(int account_id, int balance_centavos);
-
-// void deposit(int account_id, int amount_centavos);
-
-// bool withdraw(int account_id, int amount_centavos);
-
-// bool transfer(int from_id, int to_id, int amount_centavos);
-
-// int get_balance(int account_id);
+// NOTE: account creation is handled by load_accounts_file; no separate API.
 
 #endif 
