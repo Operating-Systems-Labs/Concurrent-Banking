@@ -27,6 +27,7 @@ typedef struct {
 } BufferPool;
 
 void init_buffer_pool(BufferPool* pool);
+void destroy_buffer_pool(BufferPool* pool);
 
 // Load account into buffer pool (producer)
 void load_account(BufferPool* pool, int account_id);

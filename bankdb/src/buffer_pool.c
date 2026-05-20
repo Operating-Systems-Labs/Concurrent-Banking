@@ -23,6 +23,12 @@ void init_buffer_pool(BufferPool* pool) {
     pool->blocked_loads = 0;
 }
 
+void destroy_buffer_pool(BufferPool* pool) {
+    sem_destroy(&pool->empty_slots);
+    sem_destroy(&pool->full_slots);
+    pthread_mutex_destroy(&pool->pool_lock);
+}
+
 // When a transaction worker needs an account, take a ticket from the empty_slots bowl
 void load_account(BufferPool* pool, int account_id) {
     if (sem_trywait(&pool->empty_slots) != 0) {

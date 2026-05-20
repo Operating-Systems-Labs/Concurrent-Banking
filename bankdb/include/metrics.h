@@ -14,6 +14,7 @@ extern long total_withdrawn;
 extern pthread_mutex_t metrics_lock;
 
 void metrics_init(void);
+void metrics_destroy(void);
 void record_deposit(int amount);
 void record_withdraw(int amount);
 void print_final_report(Bank* bank, Transaction* txs[], int txs_count, long initial_sum);

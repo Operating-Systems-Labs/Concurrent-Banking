@@ -16,6 +16,10 @@ void metrics_init(void) {
     pthread_mutex_init(&metrics_lock, NULL);
 }
 
+void metrics_destroy(void) {
+    pthread_mutex_destroy(&metrics_lock);
+}
+
 void record_deposit(int amount) {
     pthread_mutex_lock(&metrics_lock);
     total_deposited += amount;

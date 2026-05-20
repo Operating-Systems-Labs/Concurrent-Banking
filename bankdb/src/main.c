@@ -215,6 +215,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    destroy_buffer_pool(&buffer_pool);
+    metrics_destroy();
+
     destroy_bank(bank);
     return 0;
 }
