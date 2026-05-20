@@ -13,6 +13,7 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>
 
 static const char* op_name(OpType t) {
     switch (t) {
@@ -91,7 +92,16 @@ void parse_args(int argc, char* argv[]) {
             case 'a': accounts_path = optarg; break;
             case 't': trace_path = optarg; break;
             case 'd': deadlock_strategy = optarg; break;
-            case 'm': tick_interval_ms = atoi(optarg); break;
+            case 'm': {
+                char* end = NULL;
+                long parsed = strtol(optarg, &end, 10);
+                if (end == optarg || *end != '\0' || parsed <= 0 || parsed > INT_MAX) {
+                    fprintf(stderr, "Invalid --tick-ms value: %s\n", optarg);
+                    exit(EXIT_FAILURE);
+                }
+                tick_interval_ms = (int)parsed;
+                break;
+            }
             case 'v': verbose_logging = true; break;
         }
     }
